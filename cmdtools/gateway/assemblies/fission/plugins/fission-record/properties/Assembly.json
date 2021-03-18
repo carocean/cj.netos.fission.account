@@ -1,0 +1,56 @@
+{
+	entryPoint : {
+		plugins: [
+			{
+				name:"mybatis",
+				class:"cj.studio.orm.mybatis.MyBatisPlugin",
+				parameters:{
+					classes:"[
+					]",
+					packages:"[
+					]"
+				}
+			}
+		],
+		activators: [
+		]
+	},
+	assemblyInfo : {
+		assemblyTitle : "records",
+		assemblyResource:"site=/site;http.root=$(site)/web;http.jss=$(site)/jss/http;ws.jss=$(site)/jss/ws",
+		assemblyDescription : "裂变游戏·交个朋友·记录服务",
+		assemblyConfiguration : "",
+		assemblyCompany : "cj工作室出品，lns平台制造",
+		assemblyProduct : "cj.netos.fission",
+		assemblyCopyright : "Copyright   2011",
+		assemblyTrademark : "",
+		assemblyCulture : "",
+		guid : "A1F152D3-3044-4D4E-8767-281C806C0931",
+		assemblyVersion : "1.0.0.0",
+		assemblyFileVersion : "1.0.0.0"
+	},
+	global:{
+		default:"zh_CN",
+		desc:"如果系统环境要求各芯片采用的语言本芯片没有，则芯片可采用默认语言"
+		},
+	serviceContainer : {
+		name : "netContainer",
+		switchFilter:"off",
+		jss:[],
+		scans : [{
+			package : "cj.studio.orm.mybatis",
+			extName : ".class|.json|.xml",
+			exoterical:"true"
+		},{
+			package : "cj.netos.fission.service",
+			extName : ".class|.json|.xml",
+			exoterical:"true"
+		},{
+			package : "cj.netos.fission.plugin",
+			extName : ".class|.json|.xml",
+			exoterical:"true"
+		}
+		]
+
+	}
+}
