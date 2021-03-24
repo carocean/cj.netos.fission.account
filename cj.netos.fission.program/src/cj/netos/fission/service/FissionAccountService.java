@@ -11,6 +11,7 @@ import cj.netos.fission.util.IdWorker;
 import cj.studio.ecm.annotation.CjBridge;
 import cj.studio.ecm.annotation.CjService;
 import cj.studio.ecm.annotation.CjServiceRef;
+import cj.studio.ecm.net.CircuitException;
 import cj.studio.orm.mybatis.annotation.CjTransaction;
 
 import java.util.Calendar;
@@ -148,6 +149,37 @@ public class FissionAccountService implements IFissionAccountService {
 
     @CjTransaction
     @Override
+    public void outAbsorb(AbsorbOutRecord record) throws CircuitException {
+        FissionAccount account = getAndInitAbsorb();
+        if (account.getBalance() < record.getAmount()) {
+            throw new CircuitException("500", String.format("余额不足：%s > %s", record.getAmount(), account.getBalance()));
+        }
+        AbsorbBill bill = new AbsorbBill();
+        bill.setSn(new IdWorker().nextId());
+        bill.setAccount("absorb");
+        bill.setTitle("提取洇金到洇取中心");
+        bill.setPerson(record.getPerson());
+        bill.setNickName(record.getNickName());
+        bill.setAmount(record.getAmount()*-1);
+        long balanceAmount = account.getBalance() + bill.getAmount();
+        bill.setBalance(balanceAmount);
+        bill.setOrder(1);
+        bill.setRefsn(record.getSn());
+        bill.setCtime(CashierUtils.dateTimeToMicroSecond(System.currentTimeMillis()));
+        bill.setWorkday(CashierUtils.dateTimeToDay(System.currentTimeMillis()));
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        bill.setDay(calendar.get(Calendar.DAY_OF_MONTH));
+        bill.setMonth(calendar.get(Calendar.MONTH));
+        bill.setSeason(calendar.get(Calendar.MONTH) % 4);
+        bill.setYear(calendar.get(Calendar.YEAR));
+        bill.setNote(null);
+        absorbBillMapper.insert(bill);
+
+        fissionAccountMapper.updateBalance("absorb", balanceAmount);
+    }
+    @CjTransaction
+    @Override
     public void inBusiness(BusinessInRecord record) {
         FissionAccount account = getAndInitBusiness();
 
@@ -175,6 +207,7 @@ public class FissionAccountService implements IFissionAccountService {
 
         fissionAccountMapper.updateBalance("business", balanceAmount);
     }
+
 
     @CjTransaction
     @Override

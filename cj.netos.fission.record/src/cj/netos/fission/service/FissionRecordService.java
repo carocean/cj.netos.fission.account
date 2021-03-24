@@ -2,6 +2,7 @@ package cj.netos.fission.service;
 
 import cj.netos.fission.mapper.*;
 import cj.netos.fission.model.AbsorbInRecord;
+import cj.netos.fission.model.AbsorbOutRecord;
 import cj.netos.fission.model.BusinessInRecord;
 import cj.netos.fission.model.IncomeRecord;
 import cj.studio.ecm.annotation.CjBridge;
@@ -50,22 +51,43 @@ public class FissionRecordService implements IFissionRecordService {
     public void inAbsorbError(AbsorbInRecord record, int status, String message) {
         absorbInRecordMapper.done(record.getSn(), status, message);
     }
+
+    @CjTransaction
+    @Override
+    public void outAbsorb(AbsorbOutRecord record) {
+        absorbOutRecordMapper.insert(record);
+    }
+
+    @CjTransaction
+    @Override
+    public void outAbsorbSucceed(AbsorbOutRecord record) {
+        absorbOutRecordMapper.done(record.getSn(),200,"ok");
+    }
+
+    @CjTransaction
+    @Override
+    public void outAbsorbError(AbsorbOutRecord record, int status, String message) {
+        absorbOutRecordMapper.done(record.getSn(),status,message);
+    }
+
     @CjTransaction
     @Override
     public void inBusinessSucceed(BusinessInRecord record) {
         businessInRecordMapper.done(record.getSn(), 200, "ok");
     }
+
     @CjTransaction
     @Override
     public void inBusinessError(BusinessInRecord record, int status, String message) {
         businessInRecordMapper.done(record.getSn(), status, message);
     }
+
     @CjTransaction
     @Override
     public List<BusinessInRecord> pageBusinessInRecord(int shuntState, int limit, long offset) {
         if (shuntState < 0) {
-            return businessInRecordMapper.page(limit,offset);
+            return businessInRecordMapper.page(limit, offset);
         }
-        return businessInRecordMapper.pageByShuntState(shuntState,limit,offset);
+        return businessInRecordMapper.pageByShuntState(shuntState, limit, offset);
     }
 }

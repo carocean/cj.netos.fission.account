@@ -302,4 +302,12 @@
       note = #{note,jdbcType=VARCHAR}
     where sn = #{sn,jdbcType=VARCHAR}
   </update>
+  <update id="done" parameterType="cj.netos.fission.model.AbsorbOutRecord">
+    update absorb_out_record
+    set
+    `state` = 1,
+    `status` = #{status,jdbcType=INTEGER},
+    message = #{message,jdbcType=VARCHAR}
+    where sn = #{sn,jdbcType=VARCHAR}
+  </update>
 </mapper>

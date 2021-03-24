@@ -60,4 +60,7 @@ public interface AbsorbOutRecordMapper {
      * @mbg.generated generated automatically, do not modify!
      */
     int updateByPrimaryKey(AbsorbOutRecord record);
+
+    void done(@Param(value = "sn") String sn,@Param(value = "status") int status, @Param(value = "message")String message);
+
 }

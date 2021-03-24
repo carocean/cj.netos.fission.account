@@ -1,7 +1,9 @@
 package cj.netos.fission.cmd;
 
 import cj.netos.fission.IInAbsorbActivityController;
+import cj.netos.fission.IOutAbsorbActivityController;
 import cj.netos.fission.model.AbsorbInRecord;
+import cj.netos.fission.model.AbsorbOutRecord;
 import cj.netos.rabbitmq.CjConsumer;
 import cj.netos.rabbitmq.RabbitMQException;
 import cj.netos.rabbitmq.RetryCommandException;
@@ -22,6 +24,9 @@ import java.io.IOException;
 public class OnInAbsorbCommand implements IConsumerCommand {
     @CjServiceRef
     IInAbsorbActivityController inAbsorbActivityController;
+    @CjServiceRef
+    IOutAbsorbActivityController outAbsorbActivityController;
+
     @Override
     public void command(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws RabbitMQException, RetryCommandException, IOException {
 //        LongString person = (LongString) properties.getHeaders().get("person");
@@ -29,13 +34,31 @@ public class OnInAbsorbCommand implements IConsumerCommand {
         AbsorbInRecord record = new Gson().fromJson(json, AbsorbInRecord.class);
         try {
             inAbsorbActivityController.inAbsorb(record);
-            notifyWithdrawAbsorb(record);//通知洇取器提取洇金
         } catch (Exception e) {
             String msg = e.getMessage();
             if (!StringUtil.isEmpty(msg)) {
                 msg = msg.substring(0, msg.length() > 200 ? 200 : msg.length());
             }
-            inAbsorbActivityController.error(record,500,msg);
+            inAbsorbActivityController.error(record, 500, msg);
+            CJSystem.logging().error(getClass(), e);
+            CircuitException ce = CircuitException.search(e);
+            if (ce == null) {
+                throw new RabbitMQException(ce.getStatus(), e);
+            }
+            throw new RabbitMQException("500", e);
+        }
+        //提现，并推送到robot进行分发
+        AbsorbOutRecord outRecord = null;
+        try {
+            outRecord = outAbsorbActivityController.receipt();//收单
+            outAbsorbActivityController.out(outRecord);//实际提现
+            outAbsorbActivityController.pushToRobot(outRecord);//通知洇取器提取洇金
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (!StringUtil.isEmpty(msg)) {
+                msg = msg.substring(0, msg.length() > 200 ? 200 : msg.length());
+            }
+            outAbsorbActivityController.error(outRecord, 500, msg);
             CJSystem.logging().error(getClass(), e);
             CircuitException ce = CircuitException.search(e);
             if (ce == null) {
@@ -45,6 +68,4 @@ public class OnInAbsorbCommand implements IConsumerCommand {
         }
     }
 
-    private void notifyWithdrawAbsorb(AbsorbInRecord record) {
-    }
 }
